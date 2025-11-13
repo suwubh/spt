@@ -1,0 +1,45 @@
+clear all
+close all
+clc
+n = -10:1:10;
+x1 = int32(n > 0 & n <= 5);
+x2 = int32(n > -2 & n <= 1);
+a = 2;
+b = 3;
+
+lhs = (a*x1 + b*x2).^2;
+rhs = a*x1.^2 + b*x2.^2;
+
+if(isequal(lhs,rhs))
+   disp('System is linear')
+else
+    disp('System is non linear')
+end
+
+subplot(2,2,1)
+stem(n,lhs)
+title('LHS for linearity')
+
+subplot(2,2,2)
+stem(n,rhs)
+title('RHS for linearity')
+
+%Time Invariance check%
+n0 = 3;
+y1 = x1.^2;
+x_shift = circshift(x1,n0);
+y_shift_input = x_shift.^2;
+y_shift_output = circshift(y1,n0);
+if isequal(y_shift_input,y_shift_output)
+    disp('Invariant')
+else
+    disp('Variant')
+end
+subplot(2,2,3)
+stem(n,y_shift_input);
+title('LHS for time invariance')
+
+subplot(2,2,4)
+stem(n,y_shift_output)
+title('RHS for time invariance')
+
