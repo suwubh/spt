@@ -1,123 +1,122 @@
-clear all
-close all
-clc
-%% Experiment 3.... LTI System
-n=-10:10;
-x1=int32(n>0 & n<=5);
-x2=int32(n>-2 & n<=1);
-a=2;b=3;
-% Linearity check for y(n)=x^2(n)
-y1=x1.^2; % . needed for indivisual operation on each element of array
-y2=x2.^2;
-lhs=(a*x1+b*x2).^2;
-rhs=a*y1+b*y2;
-if y1==y2
-    display("System is Linear");
+clearvars; close all; clc;
+
+%% Experiment: LTI System checks + time-shifting examples
+n = -10:10;            % sample index axis
+% define original signal x(n) = n for 1 <= n <= 5, else 0
+x_orig = zeros(size(n));
+for k = 1:length(n)
+    if n(k) > 0 && n(k) <= 5
+        x_orig(k) = n(k);
+    end
+end
+
+% --- Linearity test for y(n) = x(n).^2 ---
+x1 = double(n>0 & n<=5);    % simple test inputs
+x2 = double(n>-2 & n<=1);
+a = 2; b = 3;
+
+y1 = x1.^2;
+y2 = x2.^2;
+lhs = (a*x1 + b*x2).^2;
+rhs = a*y1 + b*y2;
+
+fprintf('\n--- Linearity test ---\n');
+if isequal(lhs, rhs)
+    disp('System is Linear');
 else
-    display("System is non linear");
+    disp('System is Non-linear (as expected for y = x^2)');
+end
+
+% --- Time-invariance test for y(n)=x(n).^2 ---
+n0 = 3;                              % shift amount
+% shifted input -> system response
+x1_shifted = interp_signal(n, x1, n - n0);   % x1(n-n0) evaluated on n
+y_shift_input = x1_shifted.^2;               % system(x1 shifted)
+% original output shifted
+y1_orig = y1;
+y_shift_output = interp_signal(n, y1_orig, n - n0);  % y1(n-n0)
+
+fprintf('\n--- Time-invariance test ---\n');
+if isequal(y_shift_output, y_shift_input)
+    disp('System is Time Invariant');
+else
+    disp('System is Time Variant (as expected for y = x^2)');
+end
+
+% --- Build time-shifted / time-reversed versions of x_orig ---
+% We compute each transformed signal z(n) = x_original( arg(n) ),
+% where arg(n) depends on the transform (e.g., arg = n+2 for x(n+2)).
+
+x_n_plus2   = interp_signal(n, x_orig, n + 2);   % x(n+2)
+x_n_minus2  = interp_signal(n, x_orig, n - 2);   % x(n-2)
+x_neg_n     = interp_signal(n, x_orig, -n);      % x(-n)
+x_neg_n_minus2 = interp_signal(n, x_orig, -n - 2); % x(-n-2)
+x_neg_n_plus2  = interp_signal(n, x_orig, -n + 2); % x(-n+2)
+
+% --- Plotting (5 x 2 grid like original) ---
+figure('Name','LTI checks and time-shifts','NumberTitle','off','Position',[100 100 1000 800]);
+
 subplot(5,2,1);
-stem(n,lhs);
-title("LHS: (a*x1 + b*x2)^2");
+stem(n, lhs, 'filled'); title('LHS: (a*x1 + b*x2).^2'); xlabel('n'); ylabel('lhs');
+
 subplot(5,2,2);
-stem(n,rhs);
-title("RHS: a*x1 + b*x2");
-% Time Invariance check for y(n)=x^2(n)
-n0=3; % Shift amount
-x_shift=circshift(x1,n0);
-y_shift__input=x_shift.^2;
-y_shift__output=circshift(y1,n0);
-if (y_shift__output==y_shift__input)
-    display("System is Time Invariant")
-else
-    display("System is Time Variant")
-end
+stem(n, rhs, 'filled'); title('RHS: a*y1 + b*y2'); xlabel('n'); ylabel('rhs');
+
 subplot(5,2,3);
-stem(n,y_shift__input);
-title("Output for shifted input")
+stem(n, y_shift_input, 'filled'); title('System output for shifted input: y[x(n-n0)]');
+xlabel('n'); ylabel('y');
+
 subplot(5,2,4);
-stem(n,y_shift__output);
-title("Shifted output of original");
-end
-% Time shifting
-l=length(n);
-x=zeros(1,l);
-for i=1:l
-    if(n(i)>0 && n(i)<=5)
-        x(i)=n(i);
-    else
-        x(i)=0;
-    end
-end
-disp("x(n):");disp(x)
-for i=1:l
-    if(n(i)>0 && n(i)<=5)
-        x(i-2)=n(i);
-    elseif (n(i)>5)
-        x(i-2)=0;
-    else
-        x(i)=0;
-    end
-end
-disp("x(n+2):");disp(x)
-for i=1:l
-    if((n(i)-2)>0 && (n(i)-2)<=5)
-        x(i)=n(i)-2;
-    else
-        x(i)=0;
-    end
-end
-disp("x(n-2)");disp(x)
-for i=1:l
-    if(-n(i)>0 && -n(i)<=5)
-        x(i)=-n(i);
-    elseif (-n(i)>5)
-        x(i)=0;
-    else
-        x(i)=0;
-    end
-end
-disp("x(-n)");disp(x)
-for i=1:l
-    if(-n(i)+2>0 && -n(i)+2<=5)
-        x(i)=-n(i-2);
-    elseif (n(i)>1)
-        x(i)=0;
-    else
-        x(i)=0;
-    end
-end
-disp("x(-n-2)");disp(x)
-for i=1:l
-    if(-n(i)-2>0 && -n(i)-2<=5)
-        x(i)=-n(i+2);
-    elseif (n(i)>1)
-        x(i)=0;
-    else
-        x(i)=0;
-    end
-end
-disp("x(n+2):");disp(x)
+stem(n, y_shift_output, 'filled'); title('Shifted output: y[n-n0] (shift original output)');
+xlabel('n'); ylabel('y');
+
 subplot(5,2,5);
-stem(n,x);
-title("Original Signal : x(n)");
-xlabel("n");ylabel("x(n)")
+stem(n, x_orig, 'filled'); title('Original signal: x(n)');
+xlabel('n'); ylabel('x(n)');
+
 subplot(5,2,6);
-stem(n,x);
-title("Shifted Signal : x(n+2)");
-xlabel("n");ylabel("x(n+2)");
+stem(n, x_n_plus2, 'filled'); title('Shifted: x(n+2)');
+xlabel('n'); ylabel('x(n+2)');
+
 subplot(5,2,7);
-stem(n,x);
-title("Shifted Signal : x(n-2)");
-xlabel("n");ylabel("x(n+2)");
+stem(n, x_n_minus2, 'filled'); title('Shifted: x(n-2)');
+xlabel('n'); ylabel('x(n-2)');
+
 subplot(5,2,8);
-stem(-n,x);
-title("Shifted Signal : x(-n)");
-xlabel("n");ylabel("x(-n)");
+stem(n, x_neg_n, 'filled'); title('Time-reverse: x(-n)');
+xlabel('n'); ylabel('x(-n)');
+
 subplot(5,2,9);
-stem(-n,x);
-title("Shifted Signal : x(-n-2)");
-xlabel("n");ylabel("x(-n-2)");
+stem(n, x_neg_n_minus2, 'filled'); title('x(-n-2)');
+xlabel('n'); ylabel('x(-n-2)');
+
 subplot(5,2,10);
-stem(-n,x);
-title("Shifted Signal : x(-n+2)");
-xlabel("n");ylabel("x(-n+2)");
+stem(n, x_neg_n_plus2, 'filled'); title('x(-n+2)');
+xlabel('n'); ylabel('x(-n+2)');
+
+% --- End of script ---
+
+
+%% Helper function (local, nested function style)
+function y_eval = interp_signal(n_axis, x_values, arg)
+% interp_signal evaluates the discrete-time signal defined by vector x_values
+% at argument points given by 'arg'. All inputs are vectors of same length n_axis.
+% The original signal x_values is defined on the sample grid n_axis.
+% For each element i we return x(orig_index) where orig_index corresponds to arg(i).
+% If arg(i) is not exactly one of the n_axis sample points (or outside range),
+% we return 0. This implements x_transformed(n) = x_original(arg).
+    % initialize
+    y_eval = zeros(size(n_axis));
+    % create mapping from sample value -> index in x_values
+    % since n_axis is regularly spaced, we can use ismember to find exact matches
+    for ii = 1:length(n_axis)
+        desired = arg(ii);
+        % find index where n_axis equals desired
+        idx = find(n_axis == desired, 1);
+        if ~isempty(idx)
+            y_eval(ii) = x_values(idx);
+        else
+            y_eval(ii) = 0;
+        end
+    end
+end
